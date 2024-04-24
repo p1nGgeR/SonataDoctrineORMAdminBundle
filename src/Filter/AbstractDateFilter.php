@@ -160,20 +160,22 @@ abstract class AbstractDateFilter extends Filter
         $endDateParameterName = $this->getNewParameterName($query);
 
         if (DateRangeOperatorType::TYPE_NOT_BETWEEN === $type) {
-            if (null !== $value['start']) {
-                $this->applyWhere($query, sprintf('%s.%s %s :%s', $alias, $field, '<', $startDateParameterName));
-            }
-
-            if (null !== $value['end']) {
-                $this->applyWhere($query, sprintf('%s.%s %s :%s', $alias, $field, '>', $endDateParameterName));
-            }
+            match (true) {
+                null !== $value['start'] && null !== $value['end'] => $this->applyWhere(
+                    $query,
+                    "{$alias}.{$field} < :{$startDateParameterName} OR {$alias}.{$field} > :{$endDateParameterName}"
+                ),
+                null !== $value['start'] => $this->applyWhere($query, "{$alias}.{$field} < :{$startDateParameterName}"),
+                null !== $value['end'] => $this->applyWhere($query, "{$alias}.{$field} > :{$endDateParameterName}"),
+                default => null,
+            };
         } else {
             if (null !== $value['start']) {
-                $this->applyWhere($query, sprintf('%s.%s %s :%s', $alias, $field, '>=', $startDateParameterName));
+                $this->applyWhere($query, "{$alias}.{$field} >= :{$startDateParameterName}");
             }
 
             if (null !== $value['end']) {
-                $this->applyWhere($query, sprintf('%s.%s %s :%s', $alias, $field, '<=', $endDateParameterName));
+                $this->applyWhere($query, "{$alias}.{$field} <= :{$endDateParameterName}");
             }
         }
 
